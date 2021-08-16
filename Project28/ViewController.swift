@@ -19,6 +19,8 @@ class ViewController: UIViewController {
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillHideNotification, object: nil)
         notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        //posts when the app is no longer active and loses focus.
+        notificationCenter.addObserver(self, selector: #selector(saveSecretMessage), name: UIApplication.willResignActiveNotification, object: nil)
     }
     
     @objc func adjustForKeyboard(notification: Notification) {
@@ -39,7 +41,29 @@ class ViewController: UIViewController {
         secret.scrollRangeToVisible(selectedRange)
     }
     
+    func unlockSecretMessage() {
+        secret.isHidden = false
+        title = "Secret stuff!"
+
+        //Returns a string value for a specified key.
+        if let text = KeychainWrapper.standard.string(forKey: "SecretMessage") {
+            secret.text = text
+        }
+    }
+    
+    @objc func saveSecretMessage() {
+        guard secret.isHidden == false else { return }
+
+        //Save a String value to the keychain associated with a specified key.
+        KeychainWrapper.standard.set(secret.text, forKey: "SecretMessage")
+        //make the textfield stop being active
+        secret.resignFirstResponder()
+        secret.isHidden = true
+        title = "nothing to see here"
+    }
+    
     @IBAction func authenticateTapped(_ sender: Any) {
+        unlockSecretMessage()
     }
 }
 
